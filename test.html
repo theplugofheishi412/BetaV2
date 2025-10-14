@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Flag Game 🚩</title>
+    <meta name="description" content="Jeu interactif pour identifier les signaux d'alarme en amour et amitié">
+    <meta name="theme-color" content="#ff3b3b">
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <!-- CSS -->
+    <style>
+        :root {
+            --red: #ff3b3b;
+            --dark: #1a1a1a;
+            --light: #f5f5f5;
+            --gray: #333;
+            --light-gray: #555;
+            --card-width: 320px;
+            --card-height: 420px;
+            --border-radius: 15px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .app-container {
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            background-color: var(--dark);
+        }
+
+        .screen.active {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: var(--red);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--light-gray);
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .simple-instructions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .instruction-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .instruction-arrow {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .instruction-text {
+            font-size: 0.9rem;
+        }
+
+        .start-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+        }
+
+        .feature i {
+            color: var(--red);
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: var(--red);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(255, 59, 59, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 59, 59, 0.4);
+        }
+
+        .btn-back {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .btn-back:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .progress-bar {
+            width: 100%;
+            max-width: 300px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--red);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            padding: 20px 0;
+        }
+
+        .card-stack {
+            position: relative;
+            width: 100%;
+            max-width: var(--card-width);
+            height: var(--card-height);
+        }
+
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: var(--gray);
+            border-radius: var(--border-radius);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-number {
+            font-size: 0.9rem;
+            color: var(--light-gray);
+        }
+
+        .card-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            line-height: 1.5;
+        }
+
+        .card-footer {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .btn-reject, .btn-accept {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-reject {
+            background-color: rgba(255, 59, 59, 0.2);
+            color: var(--red);
+            border: 2px solid var(--red);
+        }
+
+        .btn-accept {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 2px solid #4CAF50;
+        }
+
+        .btn-reject:hover, .btn-accept:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-reject:active, .btn-accept:active {
+            transform: translateY(0);
+        }
+
+        .swipe-hint {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--light-gray);
+            font-size: 0.9rem;
+        }
+
+        .swipe-hint i {
+            font-size: 1.2rem;
+        }
+
+        .swipe-hint i:first-child {
+            color: var(--red);
+        }
+
+        .swipe-hint i:last-child {
+            color: #4CAF50;
+        }
+
+        .swipe-text {
+            display: flex;
+            gap: 10px;
+        }
+
+        .results-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            text-align: center;
+        }
+
+        .score-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .compatibility-score {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--red);
+        }
+
+        .compatibility-level {
+            font-size: 1.5rem;
+            color: var(--light);
+        }
+
+        .result-description {
+            max-width: 500px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .stats {
+            display: flex;
+            gap: 40px;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--light-gray);
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .share-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-share {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-share:hover {
+            transform: translateY(-2px);
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-restart {
+            background-color: var(--red);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .btn-restart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 59, 59, 0.4);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .game-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .card {
+                width: 90vw;
+                max-width: 320px;
+                height: 70vh;
+                max-height: 500px;
+            }
+            
+            .card-content {
+                font-size: 1.1rem;
+                padding: 15px;
+            }
+            
+            .btn-reject, .btn-accept {
+                padding: 15px;
+                font-size: 1rem;
+            }
+            
+            .compatibility-score {
+                font-size: 3rem;
+            }
+            
+            .stats {
+                gap: 30px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .screen {
+                padding: 15px;
+            }
+            
+            .game-header h1 {
+                font-size: 1.6rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .instructions {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+            
+            .feature {
+                padding: 12px;
+            }
+            
+            .btn-primary, .btn-restart {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+            
+            .card-footer {
+                padding: 12px;
+            }
+            
+            .swipe-hint {
+                font-size: 0.8rem;
+            }
+            
+            .compatibility-score {
+                font-size: 2.5rem;
+            }
+            
+            .compatibility-level {
+                font-size: 1.2rem;
+            }
+            
+            .result-description {
+                font-size: 1rem;
+            }
+        }
+
+        /* Animation pour les cartes */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideIn 0.4s ease;
+        }
+
+        /* Amélioration du glissement tactile */
+        .card {
+            touch-action: pan-y;
+            user-select: none;
+        }
+    </style>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Écran de démarrage -->
+        <div id="start-screen" class="screen active">
+            <header class="game-header">
+                <h1><i class="fas fa-flag"></i> Red Flag Game</h1>
+                <p class="subtitle">Découvrez votre niveau de tolérance</p>
+                <div class="instructions">
+                    <p>💡 <strong>Comment jouer :</strong> Lisez chaque scénario et décidez s'il s'agit d'un red flag que vous rejetez 🚩 ou d'un comportement que vous acceptez ❤️</p>
+                    <div class="simple-instructions">
+                        <div class="instruction-item">
+                            <span class="instruction-arrow">←</span>
+                            <span class="instruction-text">Glisser à GAUCHE = 🚩 RED FLAG</span>
+                        </div>
+                        <div class="instruction-item">
+                            <span class="instruction-arrow">→</span>
+                            <span class="instruction-text">Glisser à DROITE = ❤️ J'ACCEPTE</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="start-content">
+                <div class="feature-list">
+                    <div class="feature">
+                        <i class="fas fa-random"></i>
+                        <span>Scénarios aléatoires</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Profil de compatibilité</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>Jeu hors ligne</span>
+                    </div>
+                </div>
+                
+                <button id="start-btn" class="btn-primary">
+                    <i class="fas fa-play"></i> Commencer le jeu
+                </button>
+            </div>
+        </div>
+
+        <!-- Écran de jeu -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <button id="back-btn" class="btn-back">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="progress-info">
+                    <span id="progress-text">0/10</span>
+                    <div class="progress-bar">
+                        <div class="progress" id="progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-container">
+                <div class="card-stack">
+                    <div class="card" id="current-card">
+                        <div class="card-header">
+                            <div class="card-number" id="card-number">1/10</div>
+                        </div>
+                        <div class="card-content">
+                            <p id="card-text">Chargement...</p>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn-reject" id="reject-btn">
+                                <i class="fas fa-flag"></i> Red Flag
+                            </button>
+                            <button class="btn-accept" id="accept-btn">
+                                <i class="fas fa-heart"></i> J'accepte
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="swipe-hint">
+                    <i class="fas fa-arrow-left"></i>
+                    <div class="swipe-text">
+                        <span style="color: var(--red);">RedFlags</span>
+                        <span>•</span>
+                        <span style="color: #4CAF50;">Accepter</span>
+                    </div>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Écran des résultats -->
+        <div id="results-screen" class="screen">
+            <div class="results-content">
+                <h2>Votre Profil de Compatibilité</h2>
+                
+                <div class="score-display">
+                    <div class="compatibility-score" id="score">75%</div>
+                    <div class="compatibility-level" id="compatibility-level">Tolérant Modéré</div>
+                </div>
+                
+                <div class="result-description">
+                    <p id="result-description">Vous avez un bon équilibre entre tolérance et limites personnelles.</p>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-value" id="rejected-count">0</span>
+                        <span class="stat-label">RedFlags</span>
+                    </div>
+                    <div class="stat">
+                       <span class="stat-value" id="accepted-count">0</span>
+                        <span class="stat-label">Acceptés</span>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <div class="share-buttons">
+                        <button class="btn-share" id="share-twitter">
+                            <i class="fab fa-twitter"></i>
+                        </button>
+                        <button class="btn-share" id="share-whatsapp">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                        <button class="btn-share" id="share-copy">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    
+                    <button class="btn-restart" id="restart-btn">
+                        <i class="fas fa-redo"></i> Rejouer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Scripts simplifiés pour la démonstration
+        document.addEventListener('DOMContentLoaded', function() {
+            const startScreen = document.getElementById('start-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const resultsScreen = document.getElementById('results-screen');
+            const startBtn = document.getElementById('start-btn');
+            const backBtn = document.getElementById('back-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            const rejectBtn = document.getElementById('reject-btn');
+            const acceptBtn = document.getElementById('accept-btn');
+            const progressText = document.getElementById('progress-text');
+            const progressBar = document.getElementById('progress-bar');
+            const cardNumber = document.getElementById('card-number');
+            const cardText = document.getElementById('card-text');
+            
+            let currentCardIndex = 0;
+            const totalCards = 10;
+            let rejectedCount = 0;
+            let acceptedCount = 0;
+            
+            // Exemples de scénarios
+            const scenarios = [
+                   "Si il fait des flammes avec plusieurs filles et qu'il ouvre toujours leurs flammes.",
+                  
+               
+                     "Si il n'est pas accro à moi.",
+                    
+               
+                   "Si il ne vérifie pas tout le temps si tout va bien chez moi et que je ne manque de rien.",
+                   
+                
+                    "Si il n'est pas tactile avec moi.",
+                    
+                
+                     "Si il rit trop avec les gens dehors fille comme garçon.",
+                  
+               
+                     "Votre partenaire respecte votre besoin de temps seul sans le prendre personnellement.",
+                    
+                
+                     "Votre partenaire vous soutient dans vos projets professionnels et personnels.",
+                   
+               
+                     "Votre partenaire s'excuse sincèrement et travaille à ne pas répéter ses erreurs.",
+                
+                
+                    "Votre partenaire respecte vos amitiés et vos relations familiales.",
+                  
+                
+                     "Votre partenaire célèbre vos réussites comme si c'étaient les siennes.", 
+           ];
+            
+            // Navigation entre écrans
+            startBtn.addEventListener('click', function() {
+                showScreen(gameScreen);
+                startGame();
+            });
+            
+            backBtn.addEventListener('click', function() {
+                showScreen(startScreen);
+            });
+            
+            restartBtn.addEventListener('click', function() {
+                showScreen(startScreen);
+            });
+            
+            // Actions de jeu
+            rejectBtn.addEventListener('click', function() {
+                handleCardDecision('reject');
+            });
+            
+            acceptBtn.addEventListener('click', function() {
+                handleCardDecision('accept');
+            });
+            
+            // Fonctions
+            function showScreen(screen) {
+                document.querySelectorAll('.screen').forEach(s => {
+                    s.classList.remove('active');
+                });
+                screen.classList.add('active');
+            }
+            
+            function startGame() {
+                currentCardIndex = 0;
+                rejectedCount = 0;
+                acceptedCount = 0;
+                updateProgress();
+                showCard();
+            }
+            
+            function showCard() {
+                if (currentCardIndex < totalCards) {
+                    cardNumber.textContent = `${currentCardIndex + 1}/${totalCards}`;
+                    cardText.textContent = scenarios[currentCardIndex];
+                } else {
+                    showResults();
+                }
+            }
+            
+            function handleCardDecision(decision) {
+                if (decision === 'reject') {
+                    rejectedCount++;
+                } else {
+                    acceptedCount++;
+                }
+                
+                currentCardIndex++;
+                updateProgress();
+                showCard();
+            }
+            
+            function updateProgress() {
+                const progress = (currentCardIndex / totalCards) * 100;
+                progressText.textContent = `${currentCardIndex}/${totalCards}`;
+                progressBar.style.width = `${progress}%`;
+            }
+            
+            function showResults() {
+                const score = Math.round((acceptedCount / totalCards) * 100);
+                document.getElementById('score').textContent = `${score}%`;
+                document.getElementById('rejected-count').textContent = rejectedCount;
+                document.getElementById('accepted-count').textContent = acceptedCount;
+                
+                // Déterminer le niveau de compatibilité
+                let level, description;
+                if (score <= 20) {
+                    level = "Très Exigeant";
+                    description = "Vous avez des standards élevés et ne tolérez pas les comportements problématiques.";
+                } else if (score <= 50) {
+                    level = "Sélectif";
+                    description = "Vous savez établir des limites claires tout en restant ouvert à certaines situations.";
+                } else if (score <= 80) {
+                    level = "Tolérant Modéré";
+                    description = "Vous avez un bon équilibre entre tolérance et limites personnelles.";
+                } else {
+                    level = "Très Tolérant";
+                    description = "Vous êtes très compréhensif et acceptez beaucoup de comportements différents.";
+                }
+                
+                document.getElementById('compatibility-level').textContent = level;
+                document.getElementById('result-description').textContent = description;
+                
+                showScreen(resultsScreen);
+            }
+            
+            // Initialisation
+            updateProgress();
+        });
+    </script>
+</body>
+</html>
